@@ -1,71 +1,83 @@
 pub mod linked_list {
-    pub struct LinkedListNode<T> {
+    pub struct ListNode<T> {
         pub value: T,
-        // next: &LinkedListNode<T>
-        pub next: Option<Box<LinkedListNode<T>>>
+        pub next: Option<Box<ListNode<T>>>
+        // len: usize -> memoize
     }
 
-    pub struct LinkedList<T> {
-        pub head: Option<Box<LinkedListNode<T>>>
-        // pub len: usize // Impl with memoization
-    }
-
-    impl <T> LinkedList<T> {
-        pub fn lookup(&self, index: usize) -> Option<&T> {
-            if let Some(node) = &self.head {
-                let mut current_node = node;
-                let mut current_index: usize = 0;
-
-                while let Some(next) = &node.next {
-                    if current_index < index {
-                        current_node = &next;
-                        current_index += 1;
-                    }
-                } 
-
-                return Some(&current_node.value);
+    impl <T: Copy> ListNode<T> {
+        pub fn new(value: T) -> ListNode<T> {
+            ListNode {
+                value,
+                next: None
             }
-
-            None
         }
 
-        // Can't get this to work, Vec.append() uses unsafe Rust, so that's not great inspiration
-        
-        // pub fn append(&mut self, value: T) {
-        //     if let Some(node) = &mut self.head {
+        pub fn append(&mut self, value: T) {
+            if let Some(ref mut node) = self.next {
+                node.append(value);
+            } else {
+                self.next = Some(Box::new(ListNode::new(value)));
+            }
+        }
 
-        //         let current_node = &mut node;
-    
-        //         while let Some(mut next) = current_node.next {
-        //             **current_node = next;
-        //         }
-    
-        //         current_node.next = Some(Box::new(LinkedListNode {
-        //             value,
-        //             next: None
-        //         }))
-        //     }
-        // }
+        pub fn lookup(&self, index: usize) -> Option<T> {
+            if index == 0 {
+                let output = self.value;
+                return Some(output);
+            }
+
+            let mut current_index = 0;
+            let mut current_node = self;
+
+            while let Some(node) = &current_node.next {
+                if current_index < index {
+                    current_node = &node;
+                    current_index += 1;
+                }
+                
+                if current_index == index {
+                    let output = current_node.value;
+                    return Some(output);
+                }
+            }
+            None
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::linked_list::*;
-    
-    #[test]
-    fn test_lookup() {
-        let mut test_list: LinkedList<usize> = LinkedList{head: Some(Box::new(LinkedListNode {value: 10, next: None}))};
-        let result: Option<&usize> = Some(&10);
 
-        assert_eq!(test_list.lookup(0), result);
+    #[test]
+    fn test_create() {
+        let new_list: ListNode<usize> = ListNode::new(5);
+
+        assert_eq!(new_list.value, 5 as usize);
     }
 
     #[test]
-    fn test_lookup2() { // Caught in a loop?
-        let mut test_list: LinkedList<usize> = LinkedList{head: Some(Box::new(LinkedListNode {value: 10, next: Some(Box::new(LinkedListNode {value: 1, next: None}))}))};
-        let result: Option<&usize> = Some(&1);
+    fn test_append() {
+        let mut new_list: ListNode<usize> = ListNode::new(5);
+        new_list.append(6);
 
-        assert_eq!(test_list.lookup(1), result);
+        let mut value: usize = 0;
+
+        if let Some(node) = new_list.next {
+            value = node.value;
+        }
+
+        assert_eq!(value, 6);
+    }
+
+    #[test]
+    fn test_lookup() {
+        let mut new_list: ListNode<usize> = ListNode::new(5);
+        new_list.append(6);
+        new_list.append(7);
+        new_list.append(8);
+
+        assert_eq!(Some(8), new_list.lookup(3));
     }
 }
