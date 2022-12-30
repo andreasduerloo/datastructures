@@ -2,7 +2,6 @@ pub mod linked_list {
     pub struct ListNode<T> {
         pub value: T,
         pub next: Option<Box<ListNode<T>>>
-        // len: usize -> memoize
     }
 
     impl <T: Copy> ListNode<T> {
@@ -35,13 +34,32 @@ pub mod linked_list {
                     current_node = &node;
                     current_index += 1;
                 }
-                
+
                 if current_index == index {
                     let output = current_node.value;
                     return Some(output);
                 }
             }
             None
+        }
+
+        pub fn len(&self) -> usize { // Could be memoized with a len field of type Option<usize>, but then this would need &mut self, which feels weird for a len() method.
+            // Check out interior mutability with RefCell?
+            // if let Some(length) = self.len {
+            //     return length;
+            // }
+            // else {
+            //     //
+            // }
+            let mut counter: usize = 1;
+            let mut current_node = self;
+
+            while let Some(node) = &current_node.next {
+                current_node = &node;
+                counter += 1;
+            }
+            counter
+
         }
     }
 }
@@ -79,5 +97,15 @@ mod tests {
         new_list.append(8);
 
         assert_eq!(Some(8), new_list.lookup(3));
+    }
+
+    #[test]
+    fn test_len() {
+        let mut new_list: ListNode<usize> = ListNode::new(5);
+        new_list.append(6);
+        new_list.append(7);
+        new_list.append(8);
+
+        assert_eq!(4, new_list.len());
     }
 }
