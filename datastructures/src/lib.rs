@@ -1,6 +1,9 @@
 pub mod linked_list {
+    use std::cell::RefCell;
+
     pub struct ListNode<T> {
         pub value: T,
+        pub len: Option<RefCell<usize>>,
         pub next: Option<Box<ListNode<T>>>
     }
 
@@ -8,6 +11,7 @@ pub mod linked_list {
         pub fn new(value: T) -> ListNode<T> {
             ListNode {
                 value,
+                len: None,
                 next: None
             }
         }
@@ -20,7 +24,7 @@ pub mod linked_list {
             }
         }
 
-        pub fn lookup(&self, index: usize) -> Option<T> {
+        pub fn nth(&self, index: usize) -> Option<T> {
             if index == 0 {
                 let output = self.value;
                 return Some(output);
@@ -43,23 +47,21 @@ pub mod linked_list {
             None
         }
 
-        pub fn len(&self) -> usize { // Could be memoized with a len field of type Option<usize>, but then this would need &mut self, which feels weird for a len() method.
-            // Check out interior mutability with RefCell?
-            // if let Some(length) = self.len {
-            //     return length;
-            // }
-            // else {
-            //     //
-            // }
-            let mut counter: usize = 1;
-            let mut current_node = self;
-
-            while let Some(node) = &current_node.next {
-                current_node = &node;
-                counter += 1;
+        pub fn len(&self) -> usize { // Doesn't work yet
+            if let Some(length) = self.len {
+                return length;
             }
-            counter
+            else {
+                let mut counter: usize = 1;
+                let mut current_node = self;
 
+                while let Some(node) = &current_node.next {
+                    current_node = &node;
+                    counter += 1;
+                }
+                self.len = Some(RefCell::new(counter));
+                counter    
+            }
         }
     }
 }
@@ -90,13 +92,13 @@ mod tests {
     }
 
     #[test]
-    fn test_lookup() {
+    fn test_nth() {
         let mut new_list: ListNode<usize> = ListNode::new(5);
         new_list.append(6);
         new_list.append(7);
         new_list.append(8);
 
-        assert_eq!(Some(8), new_list.lookup(3));
+        assert_eq!(Some(8), new_list.nth(3));
     }
 
     #[test]
